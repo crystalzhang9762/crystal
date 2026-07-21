@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>培安社工</title>
+<style>
+  :root{
+    --gold:#8a6d3b; --gold-l:#c9a86a; --bg:#faf7f1; --card:#fff;
+    --done:#e9f5ec; --done-t:#2f8a4e; --muted:#9b9384;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:#2c2a26;line-height:1.5;padding-bottom:40px}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--gold),var(--gold-l));
+    color:#fff;padding:16px 18px 14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.5px}
+  header .sub{font-size:12px;opacity:.9;margin-top:2px}
+  .bar{height:10px;background:rgba(255,255,255,.35);border-radius:6px;margin-top:10px;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:#fff;border-radius:6px;transition:width .3s}
+  .count{font-size:13px;margin-top:6px;opacity:.95}
+  .day{padding:14px 16px 2px}
+  .day h2{margin:0;font-size:14px;color:var(--gold);font-weight:700;
+    border-left:4px solid var(--gold-l);padding-left:8px}
+  .item{display:flex;align-items:flex-start;gap:12px;background:var(--card);
+    margin:10px 0 0;padding:14px;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);
+    transition:background .2s}
+  .item.on{background:var(--done)}
+  .item.on .txt .ttl{color:var(--done-t);text-decoration:line-through;text-decoration-color:#bcd9c4}
+  .box{flex:0 0 24px;width:24px;height:24px;border:2px solid var(--gold-l);border-radius:7px;
+    margin-top:2px;position:relative;transition:.2s}
+  .item.on .box{background:var(--done-t);border-color:var(--done-t)}
+  .box::after{content:"";position:absolute;left:7px;top:3px;width:7px;height:12px;
+    border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg);opacity:0;transition:.2s}
+  .item.on .box::after{opacity:1}
+  .txt{flex:1;min-width:0}
+  .pf{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--gold);
+    border-radius:6px;padding:1px 7px;margin-bottom:4px}
+  .pf.try{background:#b07cc9}
+  .pf.wec{background:#3a8f5a}
+  .item.skip{opacity:.55}
+  .item.skip .box{border-color:#bbb}
+  .item.skip .box::after{display:none}
+  .skipbadge{display:inline-block;margin-left:7px;font-size:11px;color:#fff;background:#9a9a9a;border-radius:8px;padding:1px 7px;vertical-align:middle;font-weight:600}
+  .ttl{font-size:15px;font-weight:600;color:#2c2a26}
+  .tip{font-size:12px;color:var(--muted);margin-top:3px}
+  .more{display:inline-block;margin-top:7px;font-size:12px;color:var(--gold);font-weight:600}
+  .detail{display:none;background:#fffdf8;border:1px solid #ece3d3;border-top:none;
+    border-radius:0 0 14px 14px;margin:-2px 0 10px;padding:0 14px 14px}
+  .detail.show{display:block}
+  .det-body{white-space:pre-wrap;word-break:break-word;font-size:13.5px;
+    color:#403c34;line-height:1.7;background:#fcfaf5;border-left:3px solid var(--gold-l);
+    border-radius:8px;padding:10px 12px;margin-top:4px}
+  .copy{margin-top:10px;width:100%;background:var(--gold);color:#fff;border:none;
+    border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer}
+  .copy:active{background:#74592c}
+  .mom-label{margin-top:14px;font-size:12px;font-weight:700;color:#c47a17}
+  .mom-body{background:#fff7e6;border-left-color:#ffb84d}
+  .mom-copy{background:#e8912a}
+  .mom-copy:active{background:#c47a17}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin:24px 16px 0;line-height:1.7}
+  .rule{margin:16px;background:#fcfaf5;border:1px solid #ece3d3;border-left:4px solid var(--gold-l);
+    border-radius:10px;padding:10px 12px;font-size:12px;color:#5a544a;line-height:1.75}
+  .rule b{color:var(--gold)}
+  .reset{position:fixed;right:14px;bottom:14px;background:#fff;color:var(--gold);
+    border:1px solid var(--gold-l);border-radius:20px;padding:8px 14px;font-size:13px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>培安社工资料 · 发布打卡</h1>
+  <div class="sub">点一下就打勾 · 点「详情」看文案 · 手机随时复制去发</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="count" id="count">0 / 0 已完成</div>
+</header>
+<div class="rule" style="border-left-color:#8a6d3b;background:#fffdf8">
+  📋 <b>数据回填</b>：每条帖发完去各平台后台抄真实数据，填 <code>社工副业_数据回填表.md</code>（字段+阈值对照已备好）。D14 当晚汇总定第 3 周排期。
+</div>
+<main id="list"></main>
+<div class="rule">
+  📊 <b>需求验证决策线</b>（跑完 D1–D6 + 两篇试水④⑦后看）<br>
+  跨平台 <b>【公众号+抖音+小红书+头条号+视频号】收藏+评论+私信/转发</b> 累计：<br>
+  · <b>≥15</b> → 需求确认，继续，加码 B 线<br>
+  · <b>5–15</b> → 有苗头，优化标题/封面再观察一周<br>
+  · <b>&lt;5 且曝光低</b> → 分发问题，先修 SEO 与频率<br>
+  · <b>曝光正常但互动近 0</b> → 才真是没人要，认真重估
+</div>
+<div class="rule" style="background:#fff7e6;border-color:#ffd591">
+  📤 <b>公众号发完必做：分享到朋友圈 / 同行群</b><br>
+  新号 0 粉丝 = 0 自然曝光。D1 贴图 0 阅读就是因为没分享。<br>
+  每发一篇公众号（贴图 / 图文），顺手甩链接到朋友圈 + 社区工作群，第一批阅读就来了。
+</div>
+<div class="foot">
+  点每项「详情 ▾」可展开完整文案，按「📋 复制全文」一键复制去发<br>
+  数据存在本机浏览器（清缓存会重置）· 公众号图文记得去后台点「发表」
+</div>
+<div class="reset" onclick="resetAll()">重置</div>
+
+<script>
+const DATA = [
+  {d:"7/13 周一", items:[
+    {id:"d1", pf:"公众号贴图", t:"框架①：中级社工实务大题，背这1个万能框架就够了", tip:"配图 贴图1；评论「框架」回私信我发你",
+     detail:`考中级的姐妹，实务大题是不是一看到就懵？其实不用硬背模板，记住"1 个万能框架"就能拆任何题：
+
+① 先定位服务对象（个人 / 家庭 / 社区）
+② 找问题（生理 / 心理 / 社会三层）
+③ 给介入策略（微观直接 + 中观资源 + 宏观政策）
+④ 写评估（过程 + 结果）
+
+按这个逻辑写，踩点比瞎写多拿一半分。我自己就是拿中级证的人，当初就靠这套框架过的。
+
+需要完整版的，评论「框架」发你。
+
+#中级社工 #社工考试 #备考干货 #社区工作`,
+     moments:`中级实务大题当年就靠这 1 个万能框架过的证✍️
+整理成通用模板了，考中级、在备考的同行可以参考。都是我原创整理的、不含任何单位内部资料，需要的私我发你~`},
+    {id:"v1", pf:"视频号", t:"框架①：中级社工实务1个万能框架通杀（轮播视频）", tip:"本地视频 社工视频号轮播.mp4；扩展链接挂公众号D1；冷启动甩朋友圈",
+     detail:`【视频号发布】框架轮播
+🎬 本地视频：社工视频号轮播.mp4
+📝 标题：中级社工实务大题｜背这1个万能框架，3类题通杀
+🔗 扩展链接：挂公众号文章《框架①：中级社工实务大题，背这1个万能框架就够了》
+📌 个人简介写：培安整理·中级持证，原创资料在公众号
+💬 评论区引导：置顶"需要完整框架表，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`,
+     moments:`中级实务大题这 1 个万能框架我当初靠它过的证✍️
+整理成通用模板，视频号挂了公众号链接。考中级、在备考的同行可以参考，都是原创整理、不含任何单位内部资料，需要的私我发你~`},
+  ]},
+  {d:"7/14 周二", items:[
+    {id:"d2", pf:"小红书", t:"框架①：社会工作实务大题｜背这1个万能框架，3类题通杀", tip:"同图 card1",
+     detail:`【小红书标题】社会工作实务大题｜背这1个万能框架，3类题通杀
+
+中级实务大题一慌就写跑题？
+我中级持证，实务这科最拉分。后来就死记 1 个万能框架，啥题都能套：
+① 接题：点出服务对象+核心问题
+② 析因：用"生理/心理/社会"三维拆原因
+③ 介入：微观(个案)+中观(家庭/小组)+宏观(社区/政策)
+④ 评估：目标达成度怎么看
+⑤ 结案：跟进与转介
+
+考场就把这 5 步往题干里填，比临场编稳太多。
+
+#中级社工证 #社工考试 #社会工作实务 #社区工作者 #体制内备考
+评论「框架」发你完整 1 页框架表`},
+    {id:"d2_dy", pf:"抖音", t:"实务大题别背模板了！中级社工1个框架通杀", tip:"同图 card1；标题抖音版，正文同小红书",
+     detail:`【抖音标题】实务大题别背模板了！中级社工1个框架通杀
+
+中级实务大题一慌就写跑题？
+我中级持证，实务这科最拉分。后来就死记 1 个万能框架，啥题都能套：
+① 接题：点出服务对象+核心问题
+② 析因：用"生理/心理/社会"三维拆原因
+③ 介入：微观(个案)+中观(家庭/小组)+宏观(社区/政策)
+④ 评估：目标达成度怎么看
+⑤ 结案：跟进与转介
+
+考场就把这 5 步往题干里填，比临场编稳太多。
+
+#中级社工证 #社工考试 #社会工作实务 #社区工作者 #体制内备考
+评论「框架」发你完整 1 页框架表`},
+  ]},
+  {d:"7/15 周三", items:[
+    {id:"d3", pf:"公众号贴图", t:"表格②：社区工作必存的10张表格，少一张都抓瞎", tip:"配图 贴图2；评论「表格」回私信",
+     detail:`刚上岗的社工，台账、入户、活动全靠表。这 10 张我天天用：入户走访记录表、民情台账、矛盾调解受理表、特殊人群花名册、活动签到表、低保核查表……
+
+以前每次迎检手忙脚乱，整理成一套后，领导要啥我秒发。都是我自己原创整理的模板，不是网上拼的。
+
+想要全套的，评论「表格」发你。
+
+#社区工作 #社工日常 #基层工作 #工作模板`,
+     moments:`社区工作离不开表，台账、入户、活动全靠它📋
+整理了 10 张常用表格模板，考过中级也带过新人，刚需同行可以参考。都是通用模板、不含任何单位内部资料，需要的私我~`},
+    {id:"t1", pf:"小红书试水", cls:"try", t:"套④入户走访：入户走访记录表｜网格员必存，5张模板填空就行", tip:"纯文字帖，封面用 社工表样张_闲鱼.png；关键词「走访」",
+     detail:`【标题】入户走访记录表｜网格员必存，5张模板填空就行
+
+入户走访是社工/网格员的日常，但十个人有九个不会写民情日记——记流水账、抓不住重点。
+
+我整理了入户走访全套 5 张模板，填空就能用：
+① 入户走访登记表（户址/走访人/家庭近况/发现事项/处理意见）
+② 民情需求摸排表（紧急需求/长期诉求/可解决or待上报）
+③ 民情日记（日期/地点/事件/处置/待办/上报）
+④ 重点人员回访表（独居/刑满/信访对象跟进）
+⑤ 诉求收集表（反映人/事项/转办部门/反馈）
+
+每张都标好该填哪些字段，是我在岗真在用的。
+
+需要全套的，评论或私信我发你。
+
+#网格员 #社区工作 #入户走访 #民情日记 #基层工作
+
+【私信关键词】走访
+⚠️ 小红书私信禁一切外站导流（闲鱼/微信/公众号/视频号/淘宝均禁，用户实测）——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
+【封面】card4.png（已渲染配图卡，比表样张美观；重发用此）
+
+📊 实测（7/15 14:00发，截至 7/16 20:00 约30h累计）：首日 134 → 累计 267 小眼睛 / 7 赞 / 4 关注 / 4 评论 / 3 收藏；**私信主动要资料并真实发放 4 份**（强转化信号）。互动率≈5.2%，高于行业 3–5%；藏+评+私信转化=11，达决策线"5–15 有苗头"上限，且 4 次真实资料索取 → B 线需求验证确凿 ✅ → 无需等 D1–D6 全跑完即定调：继续、重点加码 B 线，走访类定为已验证爆点，复制 2–3 篇（低保核查/矛盾调解/活动签到）
+
+📌 加频：走访数据全场最佳，已升为常驻线。7/22（周三）起重发配图版（card4 + 换标题②），抖音/视频号同步，详见发布日历"走访加频专项"。`},
+  ]},
+  {d:"7/16 周四", items:[
+    {id:"d4", pf:"小红书", t:"表格②：社区工作必存｜这10张表格模板，新人少走3年弯路", tip:"同图 card2",
+     detail:`【小红书标题】社区工作必存｜这10张表格模板，新人少走3年弯路
+
+在社区干了段时间才懂：活儿干没干，全看表填没填。
+
+我整理了在岗天天要用的 10 张必存表：
+1. 常住人口信息台账
+2. 特殊人群（老弱病残）花名册
+3. 入户走访登记表
+4. 矛盾纠纷受理单
+5. 个案工作档案
+6. 活动签到+满意度表
+7. 民情日记 / 周报
+8. 隐患排查台账
+9. 物资领用登记表
+10. 居民满意度测评表
+
+每张都标了该填哪些字段，是我自己真在用的。
+
+#社区工作 #网格员 #居委会 #社工实务 #基层工作
+评论「表格」发你 10 张表字段清单`},
+    {id:"d4_dy", pf:"抖音", t:"社区新人必存！这10张表格模板救我命", tip:"同图 card2；标题抖音版，正文同小红书",
+     detail:`【抖音标题】社区新人必存！这10张表格模板救我命
+
+在社区干了段时间才懂：活儿干没干，全看表填没填。
+
+我整理了在岗天天要用的 10 张必存表：
+1. 常住人口信息台账
+2. 特殊人群（老弱病残）花名册
+3. 入户走访登记表
+4. 矛盾纠纷受理单
+5. 个案工作档案
+6. 活动签到+满意度表
+7. 民情日记 / 周报
+8. 隐患排查台账
+9. 物资领用登记表
+10. 居民满意度测评表
+
+每张都标了该填哪些字段，是我自己真在用的。
+
+#社区工作 #网格员 #居委会 #社工实务 #基层工作
+评论「表格」发你 10 张表字段清单`},
+    {id:"v2", pf:"视频号", t:"表格②：社区工作必存10张表格（轮播视频）", tip:"本地视频 社工视频号轮播.mp4(表格段)；扩展链接挂公众号D3",
+     detail:`【视频号发布】表格轮播
+🎬 本地视频：社工视频号轮播.mp4
+📝 标题：社区工作必存｜这10张表格模板，新人少走3年弯路
+🔗 扩展链接：挂公众号文章《表格②：社区工作必存的10张表格，少一张都抓瞎》
+📌 简介同上；评论区置顶"需要表格模板，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`,
+     moments:`整理了 10 张社区工作常用表格模板📋
+考过中级也带过新人，刚需同行可以参考。通用模板、不含任何单位内部资料，视频号挂了公众号链接，同行需要的私我发你~`},
+  ]},
+  {d:"7/17 周五", items:[
+    {id:"d5", pf:"公众号贴图", t:"活动③：搞一场社区活动，照这6张表模板就行", tip:"配图 贴图3；评论「活动」回私信",
+     detail:`活动方案 → 通知 → 签到 → 记录 → 总结 → 满意度测评，6 张表一条龙。
+
+新手最容易漏“满意度测评”，结果年底没数据、汇报卡壳。我把这 6 张做成一套模板，下次活动直接填空。
+
+需要的评论「活动」发你。
+
+#社区活动 #社工实操 #工作模板 #基层治理`,
+     moments:`办社区活动最怕临场漏东西😮‍💨
+整理了一套活动方案+执行表格，从策划到总结一条龙。都是通用模板、不含任何单位内部资料，同行需要的私我发你~`},
+    {id:"d5_dy", pf:"抖音", t:"办活动就靠这6张表，领导要材料5分钟", tip:"同图贴图3；标题抖音版，正文同公众号",
+     detail:`【抖音标题】办活动就靠这6张表，领导要材料5分钟
+
+活动方案 → 通知 → 签到 → 记录 → 总结 → 满意度测评，6 张表一条龙。
+
+新手最容易漏"满意度测评"，结果年底没数据、汇报卡壳。我把这 6 张做成一套模板，下次活动直接填空。
+
+需要的评论「活动」发你。
+
+#社区活动 #社工实操 #工作模板 #基层治理`},
+    {id:"t2", pf:"小红书试水", cls:"try", t:"套⑦社区迎检：社区迎检不慌｜这份台账清单，领导要啥秒调出", tip:"纯文字帖，封面用 card2.png；关键词「迎检」",
+     detail:`【标题】社区迎检不慌｜这份台账清单，领导要啥秒调出
+
+社区最怕两个字：迎检。临时找台账、补记录，通宵都补不完。
+
+我按迎检要求列了一份“必备台账清单”，平时备齐、检查时秒调：
+✅ 常住人口信息台账　✅ 特殊人群花名册
+✅ 低保对象台账　✅ 高龄老人台账
+✅ 入户走访登记表　✅ 隐患排查台账
+✅ 活动签到+满意度表　✅ 矛盾纠纷受理台账
+✅ 民情日记　✅ 政策享受汇总表
+
+每张标好核心字段，平时随手填，迎检不用突击。
+
+需要全套清单+模板的，评论或私信我发你。
+
+#社区工作 #迎检资料 #社区台账 #网格员 #基层工作
+
+【私信关键词】迎检
+⚠️ 小红书私信禁一切外站导流（闲鱼/微信/公众号/视频号/淘宝均禁，用户实测）——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
+【封面】card2.png`},
+    {id:"t3", pf:"小红书试水", cls:"try", t:"套⑤个案记录：个案工作记录表｜从接案到结案，6张表一套齐", tip:"配图 card5.png；关键词「个案/立卷」",
+     detail:`【标题】个案工作记录表｜从接案到结案，6张表一套齐
+
+社工做个案，最容易卡在"不会立卷、记录乱"。考证考个案，在岗更天天用。
+
+我把一个完整个案拆成6张表，从头管到尾：
+① 接案/预估/计划表（案主信息/问题描述/预估/目标/介入/时限）
+② 过程记录表（逐次面谈/进展/下次计划）
+③ 单次面谈记录表（议题/表达/观察/技巧/共识）
+④ 结案/转介表（达成度/未决问题/转介去向）
+⑤ 档案封面（问题类型/保密等级）
+⑥ 一户一档目录（家庭档案归总）
+
+照这6张填，立卷规范、督导检查也不怕。
+
+#个案工作 #社工立卷 #社会工作 #社区工作者
+
+【私信关键词】个案
+⚠️ 小红书私信禁一切外站导流——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
+【封面】card5.png`},
+    {id:"t4", pf:"小红书试水", cls:"try", t:"套⑥矛盾调解：矛盾纠纷调解｜从受理到回访，5张表格模板", tip:"配图 card6.png；关键词「调解/网格」",
+     detail:`【标题】矛盾纠纷调解｜从受理到回访，5张表格模板
+
+社区里矛盾调解最耗神，但记录不规范，出了事没依据。
+
+我整理了调解全套5张模板，规范又省事：
+① 矛盾纠纷受理单（当事人/事由/发生地/紧急度）
+② 调解登记表（参与人/争议焦点/双方诉求/进展）
+③ 调解协议书（协议内容/履行时限/见证/签字）
+④ 矛盾纠纷回访表（履行情况/是否结案）
+⑤ 邻里/物业纠纷记录表（楼栋/起因/调解要点/结果）
+
+从受理到回访一条龙，留痕规范，年底汇报也有数据。
+
+#矛盾调解 #网格员 #社区工作 #人民调解
+
+【私信关键词】调解
+⚠️ 小红书私信禁一切外站导流——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
+【封面】card6.png`},
+  ]},
+  {d:"7/21 周二", items:[
+    {id:"d6", pf:"小红书", t:"活动③：社区活动方案模板｜从策划到总结，6张表一套齐", tip:"同图 card3",
+     detail:`【小红书标题】社区活动方案模板｜从策划到总结，6张表一套齐
+
+办活动最怕临场抓瞎。我把一场活动拆成 6 张表，从头管到尾：
+① 活动方案表（主题/时间/预算/分工）
+② 物资清单表（买啥、谁买、花多少）
+③ 报名+签到表
+④ 现场执行流程表（几点干啥）
+⑤ 满意度问卷
+⑥ 活动总结表（成效+照片+反思）
+
+照这 6 张填，领导要材料 5 分钟能交，复盘也不慌。
+
+#社区活动 #党群服务 #新时代文明实践 #社工日常 #活动策划
+评论「活动」发你 6 张活动模板字段`},
+    {id:"d6_dy", pf:"抖音", t:"办社区活动就靠这6张表，领导要材料5分钟交差", tip:"同图 card3；标题抖音版，正文同小红书",
+     detail:`【抖音标题】办社区活动就靠这6张表，领导要材料5分钟交差
+
+办活动最怕临场抓瞎。我把一场活动拆成 6 张表，从头管到尾：
+① 活动方案表（主题/时间/预算/分工）
+② 物资清单表（买啥、谁买、花多少）
+③ 报名+签到表
+④ 现场执行流程表（几点干啥）
+⑤ 满意度问卷
+⑥ 活动总结表（成效+照片+反思）
+
+照这 6 张填，领导要材料 5 分钟能交，复盘也不慌。
+
+#社区活动 #党群服务 #新时代文明实践 #社工日常 #活动策划
+评论「活动」发你 6 张活动模板字段`},
+    {id:"v3", pf:"视频号", t:"活动③：社区活动6张表一套齐（轮播视频）", tip:"本地视频 社工视频号轮播.mp4(活动段)；扩展链接挂公众号活动文",
+     detail:`【视频号发布】活动轮播
+🎬 本地视频：社工视频号轮播.mp4
+📝 标题：社区活动方案模板｜从策划到总结，6张表一套齐
+🔗 扩展链接：挂公众号文章（活动类；若未单发则挂 D7/D14 长文）
+📌 简介同上；评论区置顶"需要活动表，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`,
+     moments:`办社区活动最怕临场抓瞎，我把一场活动拆成 6 张表从头管到尾🎉
+通用模板、不含任何单位内部资料，视频号挂了公众号链接，同行需要的私我发你~`},
+  ]},
+  {d:"7/22 周三", items:[
+    {id:"d7", pf:"公众号图文+闲鱼", cls:"wec", t:"图文①：中级社工持证后，我靠这两类资料做副业", tip:"去草稿箱点「发表」D7；闲鱼上架资料包",
+     detail:`【封面】cover.png
+【标题】中级社工持证后，我靠这两类资料做副业
+
+正文已写好并推进草稿箱（标题见上）。
+→ 去公众号后台「草稿箱」点开预览，满意点「发表」即可（不会自动群发）。
+
+【闲鱼上架】（一次性，不用每天发）
+商品标题可上架 1 个总链接或 3 个分链接：
+· 中级社工证备考资料 社会工作实务 万能答题框架 真题笔记 原创整理
+· 社区工作常用表格100套 台账模板 网格员居委会 可编辑 原创
+· 社区活动全套模板 活动方案签到总结满意度 党群服务 实用表格包 原创
+
+上架正文：
+中级社工证持证人，整理在职天天用的原创表格。
+不是网上拼的，是我自己真在用的模板。
+📌 表格包（19.9）：100套精选+5张完整母版，Excel可编辑
+📌 备考笔记（9.9）：实务万能框架+易错点+口诀
+📌 活动模板（9.9）：办活动6张表一套齐
+📌 年费资料库（99）：全部+持续更新
+原创整理，不卖盗版教材/网课。详情看图，需要的私我。`,
+     moments:`中级社工持证后，我把整理实务资料的经验做成了副业👀
+都是原创通用模板，不含任何单位内部资料。感兴趣的同行，文章里说了怎么拿~（分享时把公众号文章链接甩上）`},
+  ]},
+  {d:"7/23 周四", items:[
+    {id:"d8", pf:"公众号贴图", t:"框架①换标题：社会工作实务｜1个框架拆所有大题", tip:"同图贴图1，换标题 A/B 测试",
+     detail:`同 D1 正文（复制 D1 详情里的正文即可）。
+
+【标题（换②）】社会工作实务｜1个框架拆所有大题
+【话题】#中级社工 #社工考试 #备考干货 #社区工作
+
+同图不同标题 = 免费 A/B 测试，隔了 7 天不算重复。`,
+     moments:`实务大题不会写？1 个框架拆所有题型，我当年就靠它过的中级证✍️
+整理成通用模板了，考中级的同行可以参考。原创整理、不含任何单位内部资料，需要的私我发你~`},
+  ]},
+  {d:"7/24 周五", items:[
+    {id:"d9", pf:"小红书", t:"框架①换：中级社工实务｜大题别瞎写，套这1张框架表", tip:"同图 card1，换标题",
+     detail:`同 D2 正文（复制 D2 详情里的【小红书标题】+正文部分即可）。
+
+【标题（换②）】中级社工实务｜大题别瞎写，套这1张框架表`},
+    {id:"d9_dy", pf:"抖音", t:"框架①换：实务大题别背模板了！中级社工1个框架通杀", tip:"同图 card1，换标题(抖音版)",
+     detail:`同 D2 抖音正文（复制 D2 抖音项的正文即可）。
+
+【标题】实务大题别背模板了！中级社工1个框架通杀`},
+  ]},
+  {d:"7/25 周六", items:[
+    {id:"d10", pf:"公众号贴图", t:"表格②换：社区台账｜这10张表，新人都该存一份", tip:"同图贴图2，换标题",
+     detail:`同 D3 正文（复制 D3 详情里的正文即可）。
+
+【标题（换②）】社区台账｜这10张表，新人都该存一份`,
+     moments:`社区台账这 10 张表，新人真该早点存一份📋
+我自己考过中级也带过新人，整理成通用模板。不含任何单位内部资料，同行需要的私我发你~`},
+    {id:"bxf1", pf:"小红书", cls:"try", t:"走访配图版·入户走访记录表｜网格员都在找的5张模板，直接抄", tip:"配图 card4.png；7/22发；评论/私信关键词「走访」",
+     detail:`【标题】入户走访记录表｜网格员都在找的5张模板，直接抄
+
+入户走访是社工/网格员的日常，但十个人有九个不会写民情日记——记流水账、抓不住重点。
+
+我整理了入户走访全套 5 张模板，填空就能用：
+① 入户走访登记表（户址/走访人/家庭近况/发现事项/处理意见）
+② 民情需求摸排表（紧急需求/长期诉求/可解决or待上报）
+③ 民情日记（日期/地点/事件/处置/待办/上报）
+④ 重点人员回访表（独居/刑满/信访对象跟进）
+⑤ 诉求收集表（反映人/事项/转办部门/反馈）
+
+每张都标好该填哪些字段，是我在岗真在用的（原创整理，不含任何单位内部资料）。
+
+需要全套的，评论或私信我发你。
+
+#网格员 #社区工作 #入户走访 #民情日记 #基层工作
+
+【私信关键词】走访
+⚠️ 小红书私信禁一切外站导流（闲鱼/微信/公众号/视频号/淘宝均禁，用户实测）——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
+【封面】card4.png`},
+    {id:"bxf1_dy", pf:"抖音", cls:"try", t:"走访配图·入户走访记录表｜网格员都在找的5张模板，直接抄", tip:"配图 card4.png；抖音版",
+     detail:`【抖音标题】入户走访记录表｜网格员都在找的5张模板，直接抄
+
+入户走访是社工/网格员的日常，但十个人有九个不会写民情日记——记流水账、抓不住重点。
+
+我整理了入户走访全套 5 张模板，填空就能用：
+① 入户走访登记表（户址/走访人/家庭近况/发现事项/处理意见）
+② 民情需求摸排表（紧急需求/长期诉求/可解决or待上报）
+③ 民情日记（日期/地点/事件/处置/待办/上报）
+④ 重点人员回访表（独居/刑满/信访对象跟进）
+⑤ 诉求收集表（反映人/事项/转办部门/反馈）
+
+每张都标好该填哪些字段，是我在岗真在用的（原创整理，不含任何单位内部资料）。
+
+需要全套的，评论或私信我发你。
+
+#网格员 #社区工作 #入户走访 #民情日记 #基层工作`},
+    {id:"bxf1_v", pf:"视频号", cls:"try", t:"走访配图·入户走访记录表｜网格员都在找的5张模板（轮播视频）", tip:"视频号；配 card4+轮播",
+     detail:`【视频号发布】走访轮播
+🎬 本地视频：社工视频号轮播.mp4
+📝 标题：入户走访记录表｜网格员都在找的5张模板，直接抄
+🔗 扩展链接：挂公众号文章（D3 表格文章 或 D7 长文）
+💬 评论区置顶"需要走访模板，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`},
+  ]},
+  {d:"7/26 周日", items:[
+    {id:"d11", pf:"小红书", t:"表格②换：社区工作者必备｜10张常用表格，迎检不慌", tip:"同图 card2，换标题",
+     detail:`同 D4 正文（复制 D4 详情里的【小红书标题】+正文部分即可）。
+
+【标题（换②）】社区工作者必备｜10张常用表格，迎检不慌`},
+    {id:"d11_dy", pf:"抖音", t:"表格②换：社区新人必存！这10张表格模板救我命", tip:"同图 card2，换标题(抖音版)",
+     detail:`同 D4 抖音正文（复制 D4 抖音项的正文即可）。
+
+【标题】社区新人必存！这10张表格模板救我命`},
+  ]},
+  {d:"7/27 周一", items:[
+    {id:"d12", pf:"公众号贴图", t:"活动③换：社区活动｜方案到总结6张表一条龙", tip:"同图贴图3，换标题",
+     detail:`同 D5 正文（复制 D5 详情里的正文即可）。
+
+【标题（换②）】社区活动｜方案到总结6张表一条龙`,
+     moments:`社区活动从方案到总结，6 张表一条龙搞定📝
+通用模板、不含任何单位内部资料，办活动的同行需要的私我~`},
+  ]},
+  {d:"7/28 周二", items:[
+    {id:"d13", pf:"小红书", t:"活动③换：社区活动策划｜别再手忙脚乱，6张表模板拿走", tip:"同图 card3，换标题",
+     detail:`同 D6 正文（复制 D6 详情里的【小红书标题】+正文部分即可）。
+
+【标题（换②）】社区活动策划｜别再手忙脚乱，6张表模板拿走`},
+    {id:"d13_dy", pf:"抖音", t:"活动③换：办社区活动就靠这6张表，领导要材料5分钟交差", tip:"同图 card3，换标题(抖音版)",
+     detail:`同 D6 抖音正文（复制 D6 抖音项的正文即可）。
+
+【标题】办社区活动就靠这6张表，领导要材料5分钟交差`},
+  ]},
+  {d:"7/29 周三", items:[
+    {id:"d14", pf:"公众号图文+闲鱼", cls:"wec", t:"图文②：社区工作者天天要填的表，我整理成100套了", tip:"去草稿箱点「发表」D14；闲鱼微调关键词",
+     detail:`【封面】cover.png
+【标题（换②）】社区工作者天天要填的表，我整理成100套了
+
+正文同 D7 长文（已进草稿箱），仅换了标题。
+→ 去公众号后台「草稿箱」点开预览，满意点「发表」。
+
+【闲鱼微调】
+把商品标题关键词轮换（如加 2026 / 最新版），或补 1 张 社工表样张_闲鱼.png 作第 2 展示图提升下单率。`,
+     moments:`整理了社区工作常用的 100 套表格模板📚
+台账、活动、实务全覆盖，考过中级也带过新人，刚需同行可以参考。都是通用模板、不含任何单位内部资料，感兴趣的戳这篇~（分享时把公众号文章链接甩上）`},
+  ]},
+  {d:"📰 头条号（公域推荐·手动发）", items:[
+    {id:"tt1", pf:"头条图文", t:"框架①：中级社工实务大题｜背这1个万能框架，3类题通杀", tip:"图文文章；结尾引导私信，不放闲鱼/微信",
+     detail:`【头条图文标题】中级社工实务大题｜背这1个万能框架，3类题通杀
+
+中级实务大题一慌就写跑题？我中级持证，实务这科最拉分。后来死记 1 个万能框架，啥题都能套：
+① 接题：点出服务对象+核心问题
+② 析因：用“生理/心理/社会”三维拆原因
+③ 介入：微观(个案)+中观(家庭/小组)+宏观(社区/政策)
+④ 评估：目标达成度怎么看
+⑤ 结案：跟进与转介
+考场把这 5 步往题干里填，比临场编稳太多。完整带例题的 1 页框架表，我整理好了。
+需要完整版的，私信我发你。
+#中级社工证 #社工考试 #社会工作实务 #社区工作者 #体制内备考`},
+    {id:"tt2", pf:"头条图文", t:"表格②（重点）：社区工作必存｜这10张表格模板，新人少走3年弯路", tip:"B线主推；需求最强的一类",
+     detail:`【头条图文标题】社区工作必存｜这10张表格模板，新人少走3年弯路
+
+在社区干段时间才懂：活儿干没干，全看表填没填。我整理了在岗天天要用的 10 张必存表：
+1. 常住人口信息台账
+2. 特殊人群（老弱病残）花名册
+3. 入户走访登记表
+4. 矛盾纠纷受理单
+5. 个案工作档案
+6. 活动签到+满意度表
+7. 民情日记 / 周报
+8. 隐患排查台账
+9. 物资领用登记表
+10. 居民满意度测评表
+每张都标了该填哪些字段，是我自己真在用的原创模板，不是网上拼的。
+需要的私信我发你。
+#社区工作 #网格员 #居委会 #社工实务 #基层工作`},
+    {id:"tt3", pf:"头条图文", t:"活动③：社区活动方案模板｜从策划到总结，6张表一套齐", tip:"图文文章",
+     detail:`【头条图文标题】社区活动方案模板｜从策划到总结，6张表一套齐
+
+办活动最怕临场抓瞎。我把一场活动拆成 6 张表，从头管到尾：
+① 活动方案表（主题/时间/预算/分工）
+② 物资清单表（买啥、谁买、花多少）
+③ 报名+签到表
+④ 现场执行流程表（几点干啥）
+⑤ 满意度问卷
+⑥ 活动总结表（成效+照片+反思）
+照这 6 张填，领导要材料 5 分钟能交，复盘也不慌。
+需要的私信我发你。
+#社区活动 #党群服务 #新时代文明实践 #社工日常 #活动策划`},
+    {id:"tt4", pf:"头条微头条", cls:"try", t:"试水④走访：入户走访记录表｜网格员必存，5张模板填空就行", tip:"微头条短文；关键词「走访」",
+     detail:`【微头条】入户走访记录表｜网格员必存，5张模板填空就行
+
+下社区入户，最怕回来补记录凑不上。我做了 5 张走访模板：基本信息卡、需求采集单、安全隐患上报、帮扶代办跟踪、回访记录。
+每次走访填空就行，月底台账直接汇总，迎检也不慌。
+网格员同行，需要的私信我发你模板。
+#网格员 #社区工作 #入户走访 #基层工作`},
+    {id:"tt5", pf:"头条微头条", cls:"try", t:"试水⑦迎检：社区迎检台账｜这8张表，检查组来了一分钟调出来", tip:"微头条短文；关键词「迎检」",
+     detail:`【微头条】社区迎检台账｜这8张表，检查组来了一分钟调出来
+
+每次上级检查，最怕翻箱倒柜找材料。我把迎检要用的 8 张台账固化成模板：组织构架、活动开展、特殊人群、矛盾调解、隐患排查、便民服务、经费使用、年度计划总结。
+日常按这 8 张填，检查组来了直接调，再也不临阵磨枪。
+同行需要的私信我发你。
+#社区迎检 #台账 #居委会 #基层工作 #社工`},
+    {id:"tt6", pf:"头条图文", t:"持证副业（D7长文）：中级社工持证后，我靠这两类资料做副业", tip:"信任背书长文；正文见桌面《社工副业_公众号草稿.md》全文复制",
+     detail:`【头条图文标题】中级社工持证后，我靠这两类资料做副业
+
+正文同公众号 D7 长文（桌面文件《社工副业_公众号草稿.md》全文复制去发）。
+核心结构：① 持证身份背书 → ② 两类资料（备考框架 + 社区实务表格库）→ ③ 年费资料库留存 → ④ 私信「框架/表格/活动」发样张。
+头条号发时把“评论发你”统一改成“私信我发你”（全平台含私信禁闲鱼/微信/外链，私信只发资料）。`},
+  ]},
+];
+
+const K="peian_pub_checklist_v1";
+let state={}; try{state=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
+const DET={}; DATA.forEach(g=>g.items.forEach(i=>{if(i.detail)DET[i.id]=i.detail;}));
+const MOM={}; DATA.forEach(g=>g.items.forEach(i=>{if(i.moments)MOM[i.id]=i.moments;}));
+
+function render(){
+  const list=document.getElementById("list");
+  let html="";
+  DATA.forEach(g=>{
+    html+=`<div class="day"><h2>${g.d}</h2></div>`;
+    g.items.forEach(it=>{
+      const on=state[it.id]?"on":"";
+      const cls=it.cls?(" "+it.cls):"";
+      const skip=it.skip?" skip":"";
+      const badge=it.skip?'<span class="skipbadge">已跳过</span>':"";
+      html+=`<div class="item ${on}${skip}">
+        <div class="box" onclick="toggle('${it.id}')"></div>
+        <div class="txt"><span class="pf${cls}">${it.pf}</span>
+        <div class="ttl" onclick="toggle('${it.id}')">${it.t}${badge}</div><div class="tip">${it.tip}</div>
+        <div class="more" onclick="toggleDetail('${it.id}',this)">详情 ▾</div></div></div>`;
+      if(it.detail){
+        let mom="";
+        if(it.moments){
+          mom=`<div class="mom-label">📤 朋友圈文案（公众号发完，配这句甩朋友圈/同行群）</div>
+          <div class="det-body mom-body">${it.moments}</div>
+          <button class="copy mom-copy" onclick="copyMom('${it.id}',this)">📋 复制朋友圈文案</button>`;
+        }
+        html+=`<div class="detail" id="det-${it.id}">
+          <div class="det-body">${it.detail}</div>
+          <button class="copy" onclick="copyDet('${it.id}',this)">📋 复制正文</button>
+          ${mom}
+        </div>`;
+      }
+    });
+  });
+  list.innerHTML=html;
+  updateBar();
+}
+function toggle(id){
+  state[id]=!state[id];
+  const idx=DATA.flatMap(g=>g.items).findIndex(i=>i.id===id);
+  const el=document.querySelectorAll(".item")[idx];
+  if(el) el.classList.toggle("on",!!state[id]);
+  localStorage.setItem(K,JSON.stringify(state));
+  updateBar();
+}
+function toggleDetail(id,el){
+  event && event.stopPropagation && event.stopPropagation();
+  const d=document.getElementById("det-"+id);
+  const open=d.classList.toggle("show");
+  el.textContent=open?"收起 ▴":"详情 ▾";
+}
+function copyDet(id,btn){
+  const txt=DET[id]||"";
+  const done=()=>{btn.textContent="✅ 已复制";setTimeout(()=>btn.textContent="📋 复制正文",1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallback(txt,done));
+  }else{fallback(txt,done);}
+}
+function copyMom(id,btn){
+  const txt=MOM[id]||"";
+  const done=()=>{btn.textContent="✅ 已复制";setTimeout(()=>btn.textContent="📋 复制朋友圈文案",1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallback(txt,done));
+  }else{fallback(txt,done);}
+}
+function fallback(txt,cb){
+  const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.top="-9999px";
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");cb();}catch(e){alert("复制失败，请手动长按选择");}
+  document.body.removeChild(ta);
+}
+function updateBar(){
+  const all=DATA.flatMap(g=>g.items.filter(i=>!i.skip).map(i=>i.id));
+  const done=all.filter(id=>state[id]).length;
+  document.getElementById("bar").style.width=(done/all.length*100)+"%";
+  document.getElementById("count").textContent=`${done} / ${all.length} 已完成`;
+}
+function resetAll(){
+  if(confirm("确定清空所有打卡记录？")){state={};localStorage.removeItem(K);render();}
+}
+render();
+</script>
+</body>
+</html>
