@@ -3,19 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>培安社工</title>
+<title>培安社工 · 发布打卡 & 数据回填</title>
 <style>
   :root{
     --gold:#8a6d3b; --gold-l:#c9a86a; --bg:#faf7f1; --card:#fff;
     --done:#e9f5ec; --done-t:#2f8a4e; --muted:#9b9384;
+    --go:#2f8a4e; --mid:#cf9a17; --low:#c0392b;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     background:var(--bg);color:#2c2a26;line-height:1.5;padding-bottom:40px}
-  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--gold),var(--gold-l));
-    color:#fff;padding:16px 18px 14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
-  header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.5px}
-  header .sub{font-size:12px;opacity:.9;margin-top:2px}
+  /* ---- 顶部标签栏（始终固定） ---- */
+  .tabbar{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--gold),var(--gold-l));
+    color:#fff;padding:12px 14px 0;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  .tabbar h1{margin:0;font-size:16px;font-weight:700;letter-spacing:.5px}
+  .tabbar .sub{font-size:11px;opacity:.9;margin-top:1px;margin-bottom:9px}
+  .tabs{display:flex;gap:8px}
+  .tab{flex:1;text-align:center;padding:9px 4px;border:none;background:rgba(255,255,255,.18);color:#fff;
+    font-size:14px;font-weight:700;border-radius:10px 10px 0 0;cursor:pointer;opacity:.75}
+  .tab.active{background:#fff;color:var(--gold);opacity:1}
+  .pane{display:none}
+  .pane.show{display:block}
+  /* ---- 通用区块 ---- */
+  header.sec-h{background:linear-gradient(135deg,var(--gold),var(--gold-l));
+    color:#fff;padding:14px 18px 13px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  header.sec-h h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.5px}
+  header.sec-h .sub{font-size:12px;opacity:.9;margin-top:2px}
   .bar{height:10px;background:rgba(255,255,255,.35);border-radius:6px;margin-top:10px;overflow:hidden}
   .bar > i{display:block;height:100%;width:0;background:#fff;border-radius:6px;transition:width .3s}
   .count{font-size:13px;margin-top:6px;opacity:.95}
@@ -64,40 +77,114 @@
   .rule b{color:var(--gold)}
   .reset{position:fixed;right:14px;bottom:14px;background:#fff;color:var(--gold);
     border:1px solid var(--gold-l);border-radius:20px;padding:8px 14px;font-size:13px;
-    box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer}
+    box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer;z-index:25}
+  /* ---- 数据回填专属 ---- */
+  .grp{padding:14px 16px 2px}
+  .grp h2{margin:0;font-size:14px;color:var(--gold);font-weight:700;border-left:4px solid var(--gold-l);padding-left:8px}
+  .pid{font-size:14px;font-weight:700;color:var(--gold)}
+  .pdate{font-size:11px;color:var(--muted)}
+  .ppf{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--gold);
+    border-radius:6px;padding:1px 7px}
+  .ptheme{font-size:12px;color:#5a544a;margin-left:auto}
+  .row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:8px;padding:2px 9px;margin-top:8px}
+  .badge.go{background:var(--go)} .badge.mid{background:var(--mid)} .badge.low{background:var(--low)}
+  .badge.none{background:#bbb}
+  .fields{display:flex;gap:7px;margin-top:9px}
+  .fld{flex:1;min-width:0;text-align:center}
+  .fld label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px}
+  .fld input{width:100%;border:1.5px solid #e4dccb;border-radius:9px;padding:8px 4px;font-size:15px;
+    text-align:center;color:#2c2a26;background:#fdfbf7}
+  .fld input:focus{outline:none;border-color:var(--gold-l);background:#fff}
+  .sum{margin-top:9px;font-size:12px;color:#5a544a}
+  .sum b{color:var(--gold);font-size:14px}
+  .sumline{display:flex;justify-content:space-between;align-items:center}
+  .sumtag{font-size:11px;color:var(--muted)}
+  .export{position:fixed;left:14px;right:14px;bottom:14px;display:flex;gap:10px;z-index:25}
+  .btn{flex:1;background:var(--gold);color:#fff;border:none;border-radius:12px;padding:13px;
+    font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+  .btn:active{background:#74592c}
+  .btn.ghost{background:#fff;color:var(--gold);border:1px solid var(--gold-l);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+  .toast{position:fixed;left:50%;top:42%;transform:translateX(-50%);background:rgba(44,42,38,.93);
+    color:#fff;font-size:13px;padding:11px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:30}
+  .toast.show{opacity:1}
 </style>
 </head>
 <body>
-<header>
-  <h1>培安社工资料 · 发布打卡</h1>
-  <div class="sub">点一下就打勾 · 点「详情」看文案 · 手机随时复制去发</div>
-  <div class="bar"><i id="bar"></i></div>
-  <div class="count" id="count">0 / 0 已完成</div>
-</header>
-<div class="rule" style="border-left-color:#8a6d3b;background:#fffdf8">
-  📋 <b>数据回填</b>：每条帖发完去各平台后台抄真实数据，填 <code>社工副业_数据回填表.md</code>（字段+阈值对照已备好）。D14 当晚汇总定第 3 周排期。
+
+<!-- ===== 顶部标签栏 ===== -->
+<div class="tabbar">
+  <h1>培安社工资料 · 副业工作台</h1>
+  <div class="sub">手机随时打开 → 发完勾选 + 回填数据</div>
+  <div class="tabs">
+    <button class="tab active" id="tab-pub" onclick="switchTab('pub')">📋 发布打卡</button>
+    <button class="tab" id="tab-data" onclick="switchTab('data')">📊 数据回填</button>
+  </div>
 </div>
-<main id="list"></main>
-<div class="rule">
-  📊 <b>需求验证决策线</b>（跑完 D1–D6 + 两篇试水④⑦后看）<br>
-  跨平台 <b>【公众号+抖音+小红书+头条号+视频号】收藏+评论+私信/转发</b> 累计：<br>
-  · <b>≥15</b> → 需求确认，继续，加码 B 线<br>
-  · <b>5–15</b> → 有苗头，优化标题/封面再观察一周<br>
-  · <b>&lt;5 且曝光低</b> → 分发问题，先修 SEO 与频率<br>
-  · <b>曝光正常但互动近 0</b> → 才真是没人要，认真重估
-</div>
-<div class="rule" style="background:#fff7e6;border-color:#ffd591">
-  📤 <b>公众号发完必做：分享到朋友圈 / 同行群</b><br>
-  新号 0 粉丝 = 0 自然曝光。D1 贴图 0 阅读就是因为没分享。<br>
-  每发一篇公众号（贴图 / 图文），顺手甩链接到朋友圈 + 社区工作群，第一批阅读就来了。
-</div>
-<div class="foot">
-  点每项「详情 ▾」可展开完整文案，按「📋 复制全文」一键复制去发<br>
-  数据存在本机浏览器（清缓存会重置）· 公众号图文记得去后台点「发表」
-</div>
-<div class="reset" onclick="resetAll()">重置</div>
+
+<!-- ===== 页1：发布打卡 ===== -->
+<section class="pane show" id="sec-pub">
+  <header class="sec-h">
+    <h1>发布打卡</h1>
+    <div class="sub">点一下就打勾 · 点「详情」看文案 · 手机随时复制去发</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="count" id="count">0 / 0 已完成</div>
+  </header>
+  <div class="rule" style="border-left-color:#8a6d3b;background:#fffdf8">
+    📋 <b>数据回填</b>：每条帖发完去各平台后台抄真实数据，切到「📊 数据回填」标签页填，自动算累计 + 给结论。
+  </div>
+  <main id="list"></main>
+  <div class="rule">
+    📊 <b>需求验证决策线</b>（跑完 D1–D6 + 两篇试水④⑦后看）<br>
+    跨平台 <b>【公众号+抖音+小红书+头条号+视频号】收藏+评论+私信/转发</b> 累计：<br>
+    · <b>≥15</b> → 需求确认，继续，加码 B 线<br>
+    · <b>5–15</b> → 有苗头，优化标题/封面再观察一周<br>
+    · <b>&lt;5 且曝光低</b> → 分发问题，先修 SEO 与频率<br>
+    · <b>曝光正常但互动近 0</b> → 才真是没人要，认真重估
+  </div>
+  <div class="rule" style="background:#fff7e6;border-color:#ffd591">
+    📤 <b>公众号发完必做：分享到朋友圈 / 同行群</b><br>
+    新号 0 粉丝 = 0 自然曝光。D1 贴图 0 阅读就是因为没分享。<br>
+    每发一篇公众号（贴图 / 图文），顺手甩链接到朋友圈 + 社区工作群，第一批阅读就来了。
+  </div>
+  <div class="foot">
+    点每项「详情 ▾」可展开完整文案，按「📋 复制全文」一键复制去发<br>
+    数据存在本机浏览器（清缓存会重置）· 公众号图文记得去后台点「发表」
+  </div>
+  <div class="reset" onclick="resetAll()">重置打卡</div>
+</section>
+
+<!-- ===== 页2：数据回填 ===== -->
+<section class="pane" id="sec-data">
+  <header class="sec-h">
+    <h1>数据回填打卡</h1>
+    <div class="sub">每条发完，去后台抄数据填进来 → 自动算累计 · 对照阈值给结论</div>
+    <div class="bar"><i id="bar2"></i></div>
+    <div class="count" id="count2">已回填 0 / 0 条</div>
+  </header>
+  <div class="rule">
+    <b>阈值（跨平台累计「收藏 + 评论 + 私信/转发」）</b><br>
+    ≥ 15 · 继续加码（尤其 B 线表格/走访）｜5–15 · 优化标题封面再观察｜&lt; 5 且曝光正常 · 先修分发（别急着否定产品）<br>
+    曝光/播放/赞/涨粉只作参考，<b>不计入阈值</b>。
+  </div>
+  <div id="wrap"></div>
+  <div class="export">
+    <button class="btn ghost" id="reset2">清空</button>
+    <button class="btn" id="exp">导出回填数据</button>
+  </div>
+  <div class="toast" id="toast"></div>
+</section>
 
 <script>
+/* ============ 标签切换 ============ */
+function switchTab(t){
+  document.getElementById('tab-pub').classList.toggle('active', t==='pub');
+  document.getElementById('tab-data').classList.toggle('active', t==='data');
+  document.getElementById('sec-pub').classList.toggle('show', t==='pub');
+  document.getElementById('sec-data').classList.toggle('show', t==='data');
+}
+
+/* ============ 页1：发布打卡 ============ */
 const DATA = [
   {d:"7/13 周一", items:[
     {id:"d1", pf:"公众号贴图", t:"框架①：中级社工实务大题，背这1个万能框架就够了", tip:"配图 贴图1；评论「框架」回私信我发你",
@@ -115,9 +202,9 @@ const DATA = [
 #中级社工 #社工考试 #备考干货 #社区工作`,
      moments:`中级实务大题当年就靠这 1 个万能框架过的证✍️
 整理成通用模板了，考中级、在备考的同行可以参考。都是我原创整理的、不含任何单位内部资料，需要的私我发你~`},
-    {id:"v1", pf:"视频号", t:"框架①：中级社工实务1个万能框架通杀（轮播视频）", tip:"本地视频 社工视频号轮播.mp4；扩展链接挂公众号D1；冷启动甩朋友圈",
+    {id:"v1", pf:"视频号", t:"框架①：中级社工实务1个万能框架通杀（轮播视频）", tip:"本地视频 社工视频号轮播_合规0722.mp4；扩展链接挂公众号D1；冷启动甩朋友圈",
      detail:`【视频号发布】框架轮播
-🎬 本地视频：社工视频号轮播.mp4
+🎬 本地视频：社工视频号轮播_合规0722.mp4
 📝 标题：中级社工实务大题｜背这1个万能框架，3类题通杀
 🔗 扩展链接：挂公众号文章《框架①：中级社工实务大题，背这1个万能框架就够了》
 📌 个人简介写：培安整理·中级持证，原创资料在公众号
@@ -188,11 +275,11 @@ const DATA = [
 
 【私信关键词】走访
 ⚠️ 小红书私信禁一切外站导流（闲鱼/微信/公众号/视频号/淘宝均禁，用户实测）——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
-【封面】card4.png（已渲染配图卡，比表样张美观；重发用此）
+【封面】card4_合规0722.png（已渲染合规配图卡，比表样张美观；重发用此）
 
 📊 实测（7/15 14:00发，截至 7/16 20:00 约30h累计）：首日 134 → 累计 267 小眼睛 / 7 赞 / 4 关注 / 4 评论 / 3 收藏；**私信主动要资料并真实发放 4 份**（强转化信号）。互动率≈5.2%，高于行业 3–5%；藏+评+私信转化=11，达决策线"5–15 有苗头"上限，且 4 次真实资料索取 → B 线需求验证确凿 ✅ → 无需等 D1–D6 全跑完即定调：继续、重点加码 B 线，走访类定为已验证爆点，复制 2–3 篇（低保核查/矛盾调解/活动签到）
 
-📌 加频：走访数据全场最佳，已升为常驻线。7/22（周三）起重发配图版（card4 + 换标题②），抖音/视频号同步，详见发布日历"走访加频专项"。`},
+📌 加频：走访数据全场最佳，已升为常驻线。7/22（周三）起重发配图版（card4_合规0722 + 换标题②），抖音/视频号同步，详见发布日历"走访加频专项"。`},
   ]},
   {d:"7/16 周四", items:[
     {id:"d4", pf:"小红书", t:"表格②：社区工作必存｜这10张表格模板，新人少走3年弯路", tip:"同图 card2",
@@ -237,9 +324,9 @@ const DATA = [
 
 #社区工作 #网格员 #居委会 #社工实务 #基层工作
 评论「表格」发你 10 张表字段清单`},
-    {id:"v2", pf:"视频号", t:"表格②：社区工作必存10张表格（轮播视频）", tip:"本地视频 社工视频号轮播.mp4(表格段)；扩展链接挂公众号D3",
+    {id:"v2", pf:"视频号", t:"表格②：社区工作必存10张表格（轮播视频）", tip:"本地视频 社工视频号轮播_合规0722.mp4(表格段)；扩展链接挂公众号D3",
      detail:`【视频号发布】表格轮播
-🎬 本地视频：社工视频号轮播.mp4
+🎬 本地视频：社工视频号轮播_合规0722.mp4
 📝 标题：社区工作必存｜这10张表格模板，新人少走3年弯路
 🔗 扩展链接：挂公众号文章《表格②：社区工作必存的10张表格，少一张都抓瞎》
 📌 简介同上；评论区置顶"需要表格模板，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`,
@@ -267,7 +354,7 @@ const DATA = [
 需要的评论「活动」发你。
 
 #社区活动 #社工实操 #工作模板 #基层治理`},
-    {id:"t2", pf:"小红书试水", cls:"try", t:"套⑦社区迎检：社区迎检不慌｜这份台账清单，领导要啥秒调出", tip:"纯文字帖，封面用 card2.png；关键词「迎检」",
+    {id:"t2", pf:"小红书试水", cls:"try", t:"套⑦社区迎检：社区迎检不慌｜这份台账清单，领导要啥秒调出", tip:"纯文字帖，封面用 card2_合规0722.png；关键词「迎检」",
      detail:`【标题】社区迎检不慌｜这份台账清单，领导要啥秒调出
 
 社区最怕两个字：迎检。临时找台账、补记录，通宵都补不完。
@@ -287,8 +374,8 @@ const DATA = [
 
 【私信关键词】迎检
 ⚠️ 小红书私信禁一切外站导流（闲鱼/微信/公众号/视频号/淘宝均禁，用户实测）——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
-【封面】card2.png`},
-    {id:"t3", pf:"小红书试水", cls:"try", t:"套⑤个案记录：个案工作记录表｜从接案到结案，6张表一套齐", tip:"配图 card5.png；关键词「个案/立卷」",
+【封面】card2_合规0722.png`},
+    {id:"t3", pf:"小红书试水", cls:"try", t:"套⑤个案记录：个案工作记录表｜从接案到结案，6张表一套齐", tip:"配图 card5_合规0722.png；关键词「个案/立卷」",
      detail:`【标题】个案工作记录表｜从接案到结案，6张表一套齐
 
 社工做个案，最容易卡在"不会立卷、记录乱"。考证考个案，在岗更天天用。
@@ -307,8 +394,8 @@ const DATA = [
 
 【私信关键词】个案
 ⚠️ 小红书私信禁一切外站导流——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
-【封面】card5.png`},
-    {id:"t4", pf:"小红书试水", cls:"try", t:"套⑥矛盾调解：矛盾纠纷调解｜从受理到回访，5张表格模板", tip:"配图 card6.png；关键词「调解/网格」",
+【封面】card5_合规0722.png`},
+    {id:"t4", pf:"小红书试水", cls:"try", t:"套⑥矛盾调解：矛盾纠纷调解｜从受理到回访，5张表格模板", tip:"配图 card6_合规0722.png；关键词「调解/网格」",
      detail:`【标题】矛盾纠纷调解｜从受理到回访，5张表格模板
 
 社区里矛盾调解最耗神，但记录不规范，出了事没依据。
@@ -326,7 +413,7 @@ const DATA = [
 
 【私信关键词】调解
 ⚠️ 小红书私信禁一切外站导流——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
-【封面】card6.png`},
+【封面】card6_合规0722.png`},
   ]},
   {d:"7/21 周二", items:[
     {id:"d6", pf:"小红书", t:"活动③：社区活动方案模板｜从策划到总结，6张表一套齐", tip:"同图 card3",
@@ -359,9 +446,9 @@ const DATA = [
 
 #社区活动 #党群服务 #新时代文明实践 #社工日常 #活动策划
 评论「活动」发你 6 张活动模板字段`},
-    {id:"v3", pf:"视频号", t:"活动③：社区活动6张表一套齐（轮播视频）", tip:"本地视频 社工视频号轮播.mp4(活动段)；扩展链接挂公众号活动文",
+    {id:"v3", pf:"视频号", t:"活动③：社区活动6张表一套齐（轮播视频）", tip:"本地视频 社工视频号轮播_合规0722.mp4(活动段)；扩展链接挂公众号活动文",
      detail:`【视频号发布】活动轮播
-🎬 本地视频：社工视频号轮播.mp4
+🎬 本地视频：社工视频号轮播_合规0722.mp4
 📝 标题：社区活动方案模板｜从策划到总结，6张表一套齐
 🔗 扩展链接：挂公众号文章（活动类；若未单发则挂 D7/D14 长文）
 📌 简介同上；评论区置顶"需要活动表，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`,
@@ -370,7 +457,7 @@ const DATA = [
   ]},
   {d:"7/22 周三", items:[
     {id:"d7", pf:"公众号图文+闲鱼", cls:"wec", t:"图文①：中级社工持证后，我靠这两类资料做副业", tip:"去草稿箱点「发表」D7；闲鱼上架资料包",
-     detail:`【封面】cover.png
+     detail:`【封面】cover_1080.jpg
 【标题】中级社工持证后，我靠这两类资料做副业
 
 正文已写好并推进草稿箱（标题见上）。
@@ -421,7 +508,7 @@ const DATA = [
 【标题（换②）】社区台账｜这10张表，新人都该存一份`,
      moments:`社区台账这 10 张表，新人真该早点存一份📋
 我自己考过中级也带过新人，整理成通用模板。不含任何单位内部资料，同行需要的私我发你~`},
-    {id:"bxf1", pf:"小红书", cls:"try", t:"走访配图版·入户走访记录表｜网格员都在找的5张模板，直接抄", tip:"配图 card4.png；7/22发；评论/私信关键词「走访」",
+    {id:"bxf1", pf:"小红书", cls:"try", t:"走访配图版·入户走访记录表｜网格员都在找的5张模板，直接抄", tip:"配图 card4_合规0722.png；7/22发；评论/私信关键词「走访」",
      detail:`【标题】入户走访记录表｜网格员都在找的5张模板，直接抄
 
 入户走访是社工/网格员的日常，但十个人有九个不会写民情日记——记流水账、抓不住重点。
@@ -441,8 +528,8 @@ const DATA = [
 
 【私信关键词】走访
 ⚠️ 小红书私信禁一切外站导流（闲鱼/微信/公众号/视频号/淘宝均禁，用户实测）——私信只发免费模板图，不提店名不发链接；成交走**小红书店铺**（站内上架资料）
-【封面】card4.png`},
-    {id:"bxf1_dy", pf:"抖音", cls:"try", t:"走访配图·入户走访记录表｜网格员都在找的5张模板，直接抄", tip:"配图 card4.png；抖音版",
+【封面】card4_合规0722.png`},
+    {id:"bxf1_dy", pf:"抖音", cls:"try", t:"走访配图·入户走访记录表｜网格员都在找的5张模板，直接抄", tip:"配图 card4_合规0722.png；抖音版",
      detail:`【抖音标题】入户走访记录表｜网格员都在找的5张模板，直接抄
 
 入户走访是社工/网格员的日常，但十个人有九个不会写民情日记——记流水账、抓不住重点。
@@ -459,9 +546,9 @@ const DATA = [
 需要全套的，评论或私信我发你。
 
 #网格员 #社区工作 #入户走访 #民情日记 #基层工作`},
-    {id:"bxf1_v", pf:"视频号", cls:"try", t:"走访配图·入户走访记录表｜网格员都在找的5张模板（轮播视频）", tip:"视频号；配 card4+轮播",
+    {id:"bxf1_v", pf:"视频号", cls:"try", t:"走访配图·入户走访记录表｜网格员都在找的5张模板（轮播视频）", tip:"视频号；配 card4_合规0722+轮播",
      detail:`【视频号发布】走访轮播
-🎬 本地视频：社工视频号轮播.mp4
+🎬 本地视频：社工视频号轮播_合规0722.mp4
 📝 标题：入户走访记录表｜网格员都在找的5张模板，直接抄
 🔗 扩展链接：挂公众号文章（D3 表格文章 或 D7 长文）
 💬 评论区置顶"需要走访模板，私信我发你"（全平台含私信禁闲鱼/微信/外链，私信只发资料）`},
@@ -496,7 +583,7 @@ const DATA = [
   ]},
   {d:"7/29 周三", items:[
     {id:"d14", pf:"公众号图文+闲鱼", cls:"wec", t:"图文②：社区工作者天天要填的表，我整理成100套了", tip:"去草稿箱点「发表」D14；闲鱼微调关键词",
-     detail:`【封面】cover.png
+     detail:`【封面】cover_1080.jpg
 【标题（换②）】社区工作者天天要填的表，我整理成100套了
 
 正文同 D7 长文（已进草稿箱），仅换了标题。
@@ -578,7 +665,7 @@ let state={}; try{state=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
 const DET={}; DATA.forEach(g=>g.items.forEach(i=>{if(i.detail)DET[i.id]=i.detail;}));
 const MOM={}; DATA.forEach(g=>g.items.forEach(i=>{if(i.moments)MOM[i.id]=i.moments;}));
 
-function render(){
+function renderPub(){
   const list=document.getElementById("list");
   let html="";
   DATA.forEach(g=>{
@@ -652,9 +739,134 @@ function updateBar(){
   document.getElementById("count").textContent=`${done} / ${all.length} 已完成`;
 }
 function resetAll(){
-  if(confirm("确定清空所有打卡记录？")){state={};localStorage.removeItem(K);render();}
+  if(confirm("确定清空所有打卡记录？")){state={};localStorage.removeItem(K);renderPub();}
 }
-render();
+
+/* ============ 页2：数据回填 ============ */
+const POSTS = [
+  {id:'D1',  date:'7/13', pf:'公众号+抖音', theme:'实务框架',      group:'框架线', try:false},
+  {id:'D2',  date:'7/14', pf:'小红书+抖音', theme:'备考框架',      group:'框架线', try:false},
+  {id:'D3',  date:'7/15', pf:'公众号+抖音', theme:'十张表',        group:'表格线', try:false},
+  {id:'D4',  date:'7/16', pf:'小红书+抖音', theme:'表格',          group:'表格线', try:false},
+  {id:'D5',  date:'7/17', pf:'公众号+抖音', theme:'活动',          group:'活动线', try:false},
+  {id:'D6',  date:'7/21', pf:'小红书+抖音', theme:'活动',          group:'活动线', try:false},
+  {id:'D7',  date:'7/22', pf:'公众号图文+闲鱼', theme:'W1+Y1/2/3', group:'综合线', try:false},
+  {id:'试水④',date:'7/15', pf:'小红书',     theme:'走访BX',        group:'走访线', try:true, preset:{exp:267,fav:3,cmt:4,dm:4}},
+  {id:'试水⑦',date:'7/17', pf:'小红书',     theme:'迎检',          group:'迎检线', try:true},
+  {id:'D8',  date:'7/23', pf:'公众号+抖音', theme:'P1换标题②',     group:'框架线', try:false},
+  {id:'D9',  date:'7/24', pf:'小红书+抖音', theme:'X1换标题②',     group:'框架线', try:false},
+  {id:'D10', date:'7/25', pf:'公众号+抖音', theme:'P2换标题②',     group:'表格线', try:false},
+  {id:'D11', date:'7/26', pf:'小红书+抖音', theme:'X2换标题②',     group:'表格线', try:false},
+  {id:'D12', date:'7/27', pf:'公众号+抖音', theme:'P3换标题②',     group:'活动线', try:false},
+  {id:'D13', date:'7/28', pf:'小红书+抖音', theme:'X3换标题②',     group:'活动线', try:false},
+  {id:'D14', date:'7/29', pf:'公众号图文',  theme:'W2',            group:'综合线', try:false},
+  {id:'套⑤', date:'待发', pf:'小红书+抖音+视频号', theme:'个案card5', group:'个案线', try:true},
+  {id:'套⑥', date:'待发', pf:'小红书+抖音+视频号', theme:'调解card6', group:'调解线', try:true},
+];
+
+const KEY = 'peian_databackup_v1';
+let store = JSON.parse(localStorage.getItem(KEY) || '{}');
+
+POSTS.forEach(p=>{
+  if(p.preset && !store[p.id]) store[p.id] = Object.assign({}, p.preset);
+});
+
+function save2(){ localStorage.setItem(KEY, JSON.stringify(store)); }
+function getP(p){ return store[p.id] || {}; }
+function filledP(p){ const d=getP(p); return [d.exp,d.fav,d.cmt,d.dm].some(v=>v!==undefined && v!=='' && v!==null); }
+function sumP(p){ const d=getP(p); const f=+d.fav||0,c=+d.cmt||0,m=+d.dm||0; return f+c+m; }
+function badge(n){
+  if(n<=0) return {t:'待填',cls:'none'};
+  if(n>=15) return {t:'≥15 继续加码',cls:'go'};
+  if(n>=5)  return {t:'5–15 优化观察',cls:'mid'};
+  return {t:'<5 先修分发',cls:'low'};
+}
+
+function renderData(){
+  const groups = {};
+  POSTS.forEach(p=>{ (groups[p.group]=groups[p.group]||[]).push(p); });
+  let html = '';
+  Object.keys(groups).forEach(g=>{
+    html += `<div class="grp"><h2>${g}</h2></div>`;
+    groups[g].forEach(p=>{
+      const d = getP(p);
+      const total = sumP(p);
+      const b = badge(total);
+      const pfcls = p.try ? 'background:#b07cc9' : '';
+      html += `
+      <div class="item">
+        <div class="row1">
+          <span class="pid">${p.id}</span>
+          <span class="pdate">${p.date}</span>
+          <span class="ppf" style="${pfcls}">${p.pf}</span>
+          <span class="ptheme">${p.theme}</span>
+        </div>
+        <div class="fields">
+          <div class="fld"><label>曝光</label><input type="number" inputmode="numeric" data-id="${p.id}" data-k="exp" value="${d.exp!==undefined?d.exp:''}"></div>
+          <div class="fld"><label>藏</label><input type="number" inputmode="numeric" data-id="${p.id}" data-k="fav" value="${d.fav!==undefined?d.fav:''}"></div>
+          <div class="fld"><label>评</label><input type="number" inputmode="numeric" data-id="${p.id}" data-k="cmt" value="${d.cmt!==undefined?d.cmt:''}"></div>
+          <div class="fld"><label>私/转</label><input type="number" inputmode="numeric" data-id="${p.id}" data-k="dm"  value="${d.dm!==undefined?d.dm:''}"></div>
+        </div>
+        <div class="sumline">
+          <div class="sum">互动累计：<b>${total}</b> <span class="sumtag">（藏+评+私/转）</span></div>
+          <span class="badge ${b.cls}">${b.t}</span>
+        </div>
+      </div>`;
+    });
+    const gt = groups[g].reduce((a,p)=>a+sumP(p),0);
+    const gb = badge(gt);
+    html += `<div class="item" style="background:#fcfaf5;border:1px dashed var(--gold-l)">
+        <div class="sumline">
+          <div class="sum" style="font-weight:700;color:var(--gold)">${g} 合计互动：<b style="font-size:16px">${gt}</b></div>
+          <span class="badge ${gb.cls}">${gb.t}</span>
+        </div>
+      </div>`;
+  });
+  document.getElementById('wrap').innerHTML = html;
+
+  const done = POSTS.filter(filledP).length;
+  document.getElementById('count2').textContent = `已回填 ${done} / ${POSTS.length} 条`;
+  document.getElementById('bar2').style.width = (done/POSTS.length*100)+'%';
+
+  document.getElementById('wrap').querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const id=e.target.dataset.id, k=e.target.dataset.k, v=e.target.value;
+      if(!store[id]) store[id]={};
+      if(v==='') delete store[id][k]; else store[id][k]=v;
+      save2(); renderData();
+    });
+  });
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+document.getElementById('exp').addEventListener('click', ()=>{
+  let lines = ['| 帖号 | 日期 | 平台 | 主题 | 曝光 | 藏 | 评 | 私/转 | 互动累计 |',
+               '|---|---|---|---|---|---|---|---|---|'];
+  POSTS.filter(filledP).forEach(p=>{
+    const d=getP(p);
+    lines.push(`| ${p.id} | ${p.date} | ${p.pf} | ${p.theme} | ${d.exp||''} | ${d.fav||''} | ${d.cmt||''} | ${d.dm||''} | ${sumP(p)} |`);
+  });
+  const text = lines.join('\n');
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('已复制，去粘贴回 数据回填表.md')); }
+  else { toast('请手动复制下方文本'); console.log(text); }
+});
+
+document.getElementById('reset2').addEventListener('click', ()=>{
+  if(confirm('确定清空所有已填数据？（预填的试水④会保留）')){
+    store = {};
+    POSTS.forEach(p=>{ if(p.preset) store[p.id]=Object.assign({},p.preset); });
+    save2(); renderData(); toast('已清空');
+  }
+});
+
+/* ============ 启动 ============ */
+renderPub();
+renderData();
 </script>
 </body>
 </html>
