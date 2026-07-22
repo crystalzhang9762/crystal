@@ -852,8 +852,17 @@ document.getElementById('exp').addEventListener('click', ()=>{
     lines.push(`| ${p.id} | ${p.date} | ${p.pf} | ${p.theme} | ${d.exp||''} | ${d.fav||''} | ${d.cmt||''} | ${d.dm||''} | ${sumP(p)} |`);
   });
   const text = lines.join('\n');
-  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('已复制，去粘贴回 数据回填表.md')); }
-  else { toast('请手动复制下方文本'); console.log(text); }
+  const blob = new Blob([text], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dt = new Date();
+  const ds = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+  a.download = '社工副业_数据回填_'+ds+'.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  toast('已下载 .md 文件，粘进 数据回填表.md 存档');
 });
 
 document.getElementById('reset2').addEventListener('click', ()=>{
